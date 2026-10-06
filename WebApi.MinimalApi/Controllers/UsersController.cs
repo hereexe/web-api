@@ -19,15 +19,6 @@ public class UsersController : Controller
         this.mapper = mapper;
     }
 
-    [HttpGet("{userId}", Name = nameof(GetUserById))]
-    [Produces("application/json", "application/xml")]
-    public ActionResult<UserDto> GetUserById([FromRoute] Guid userId)
-    {
-        var entity = userRepository.FindById(userId);
-        if  (entity == null) return NotFound();
-        return Ok(mapper.Map<UserDto>(entity));
-    }
-
     [HttpPost]
     public IActionResult CreateUser([FromBody] CreateUserRequest user)
     {
@@ -60,4 +51,24 @@ public class UsersController : Controller
         userRepository.Delete(userId);
         return NoContent();
     }
+
+    [HttpGet("{userId}", Name = nameof(GetUserById))]
+    [HttpHead("{userId}")]
+    [Produces("application/json", "application/xml")]
+    public ActionResult<UserDto> GetUserById([FromRoute] Guid userId)
+    {
+        var entity = userRepository.FindById(userId);
+        if (entity == null) return NotFound();
+
+        var dto = mapper.Map<UserDto>(entity);
+
+        if (HttpMethods.IsHead(Request.Method))
+        {
+            Response.ContentType = "application/json; charset=utf-8";
+            return Ok();
+        }
+
+        return Ok(dto);         
+    }
+
 }
