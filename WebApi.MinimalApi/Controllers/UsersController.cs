@@ -20,9 +20,12 @@ public class UsersController : Controller
     }
 
     [HttpGet("{userId}", Name = nameof(GetUserById))]
+    [Produces("application/json", "application/xml")]
     public ActionResult<UserDto> GetUserById([FromRoute] Guid userId)
     {
-        throw new NotImplementedException();
+        var entity = userRepository.FindById(userId);
+        if  (entity == null) return NotFound();
+        return Ok(mapper.Map<UserDto>(entity));
     }
 
     [HttpPost]

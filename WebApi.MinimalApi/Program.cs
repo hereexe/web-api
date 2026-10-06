@@ -43,6 +43,8 @@ builder.Services.AddControllers(options =>
         options.SerializerSettings.DefaultValueHandling = DefaultValueHandling.Populate;
     });
 
+builder.Services.AddSingleton<IUserRepository, InMemoryUserRepository>();
+
 var app = builder.Build();
 
 app.MapControllers();
