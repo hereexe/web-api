@@ -73,23 +73,33 @@ public class UsersController : Controller
 
 
     [HttpPut("{userId}")]
-    public IActionResult UpdateUser([FromRoute] Guid userId, [FromBody] UserUpdateDto userDTO)
+    [Produces("application/json", "application/xml")]
+    public IActionResult UpdateUser([FromRoute] Guid userId, [FromBody] UpdateUserDto? user)
     {
+        if (user == null) return BadRequest();
         if (!ModelState.IsValid)
-            return UnprocessableEntity();
-        var newUser = new UserEntity(userId)
         {
-            FirstName = userDTO.firstName,
-            LastName = userDTO.lastName,
-            Login = userDTO.Login
-        };
-        var currentUser = userRepository.FindById(userId);
-        if (currentUser is not null)
-        {
-            newUser.CurrentGameId = currentUser.CurrentGameId;
-            newUser.GamesPlayed = currentUser.GamesPlayed;
+            if (ModelState.TryGetValue("userId", out var entry) && entry.Errors.Count > 0)
+                return BadRequest();
+            return UnprocessableEntity(ModelState);
         }
-        userRepository.UpdateOrInsert(newUser, out var inserted);
-        return Ok();
+
+        var currentUser = userRepository.FindById(userId);
+
+        if (currentUser == null)
+        {
+            var newUser = new UserEntity(userId);
+            mapper.Map(user, newUser);
+
+            userRepository.UpdateOrInsert(newUser, out var isInserted);
+            return CreatedAtRoute(
+                nameof(GetUserById),
+                new { userId = newUser.Id },
+                new UserIdDto { Id = newUser.Id });
+        }
+        mapper.Map(user, currentUser);
+        userRepository.UpdateOrInsert(currentUser, out var inserted);
+
+        return NoContent();
     }
 }
