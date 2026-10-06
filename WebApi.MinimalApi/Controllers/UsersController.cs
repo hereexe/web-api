@@ -49,4 +49,25 @@ public class UsersController : Controller
             new { userId = createdUserEntity.Id },
             value);
     }
+
+    [HttpPut("{userId}")]
+    public IActionResult UpdateUser([FromRoute] Guid userId, [FromBody] UserUpdateDto userDTO)
+    {
+        if (!ModelState.IsValid)
+            return UnprocessableEntity();
+        var newUser = new UserEntity(userId)
+        {
+            FirstName = userDTO.firstName,
+            LastName = userDTO.lastName,
+            Login = userDTO.Login
+        };
+        var currentUser = userRepository.FindById(userId);
+        if (currentUser is not null)
+        {
+            newUser.CurrentGameId = currentUser.CurrentGameId;
+            newUser.GamesPlayed = currentUser.GamesPlayed;
+        }
+        userRepository.UpdateOrInsert(newUser, out var inserted);
+        return Ok();
+    }
 }
