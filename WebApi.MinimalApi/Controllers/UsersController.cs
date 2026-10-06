@@ -92,4 +92,11 @@ public class UsersController : Controller
         userRepository.UpdateOrInsert(newUser, out var inserted);
         return Ok();
     }
+
+    [HttpOptions]
+    public IActionResult Options()
+    {
+        Response.Headers.Allow = "POST, GET, OPTIONS";
+        return Ok();
+    }
 }
