@@ -9,8 +9,10 @@ namespace WebApi.MinimalApi.Controllers;
 public class UsersController : Controller
 {
     // Чтобы ASP.NET положил что-то в userRepository требуется конфигурация
+    private IUserRepository userRepository;
     public UsersController(IUserRepository userRepository)
     {
+        this.userRepository = userRepository;
     }
 
     [HttpGet("{userId}")]
@@ -23,5 +25,26 @@ public class UsersController : Controller
     public IActionResult CreateUser([FromBody] object user)
     {
         throw new NotImplementedException();
+    }
+
+    [HttpPut("{userId}")]
+    public IActionResult UpdateUser([FromRoute] Guid userId, [FromBody] UserUpdateDto userDTO)
+    {
+        if (!ModelState.IsValid)
+            return UnprocessableEntity();
+        var newUser = new UserEntity(userId)
+        {
+            FirstName = userDTO.firstName,
+            LastName = userDTO.lastName,
+            Login = userDTO.Login
+        };
+        var currentUser = userRepository.FindById(userId);
+        if (currentUser is not null)
+        {
+            newUser.CurrentGameId = currentUser.CurrentGameId;
+            newUser.GamesPlayed = currentUser.GamesPlayed;
+        }
+        userRepository.UpdateOrInsert(newUser, out var inserted);
+        return Ok();
     }
 }
